@@ -1,8 +1,8 @@
 {
   "network": "monad",
   "chainId": 10143,
-  "timestamp": "2025-05-16T07:24:30.453Z",
+  "timestamp": "2025-05-16T17:28:51.820Z",
   "deployer": "0x83580508bCB8Da4dEf44e33e3c56E1f848A4D5B7",
-  "tMONG": "0x8BACa21077ef253629b61e0791ac79c035D1D74a",
-  "SlotMachine": "0xaA45eC14e672f642b8491A4c9841ED3d3B0bef7e"
+  "tMONG": "0xF57cE54f0dfC7e202c1dFC96f801522286fa220E",
+  "SlotMachine": "0x910285B7d635986bc1ED67eFCaA3A109053A960E"
 }

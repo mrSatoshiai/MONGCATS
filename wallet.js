@@ -265,7 +265,7 @@ async function connectWallet() {
       }
 
       showLoading("Requesting signature...");
-      await signer.signMessage("Sign to use Monad SlotMachine and verify ownership.");
+      await signer.signMessage("Sign to use MongCats SlotMachine and verify ownership.");
 
       isConnected = true;
       if (walletDisplay) walletDisplay.html(`${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}`);

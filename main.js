@@ -1,4 +1,4 @@
-// main.js – UI 상태 관리 강화 및 문제점 수정
+// main.js – 트위터 링크 추가, UI 상태 관리 강화, 로딩 상태, 메시지 영어화
 // (낙관적 업데이트 제외, 구조적 개선 적용)
 
 // 전역 변수 선언 (애플리케이션 전체에서 공유)
@@ -8,8 +8,8 @@ let provider, signer;          // Ethers provider 및 signer 객체 (wallet.js�
 let isConnected = false;         // 지갑 연결 상태 (wallet.js에서 관리)
 //let isAdmin = false;             // 관리자 여부 (wallet.js에서 관리)
 
-
 let bgImage; // 배경 이미지 p5.Image 객체
+let twitterLink; // 트위터 링크용 p5.Element
 
 let slotImages = []; // 슬롯 이미지 p5.Image 객체 배열
 const totalImages = 9; // 총 슬롯 이미지 개수 (utils.js 등에서도 참조 가능)
@@ -66,7 +66,7 @@ function showLoading(message) {
 }
 
 function hideLoading() {
-    console.log("[Loading] Hide. Current state: isConnected=", isConnected, "gameStarted=", gameStarted, "claimMode=", claimMode(), "playCredits=", playCredits, "spinning=", spinning, "isAdmin=", isAdmin);
+    console.log("[Loading] Hide. Current state: isConnected=", isConnected, "gameStarted=", gameStarted, "claimMode=", claimMode(), "playCredits=", playCredits, "spinning=", spinning, "isAdmin=", typeof isAdmin !== 'undefined' ? isAdmin: 'undefined');
     globalIsLoading = false;
     globalLoadingMessage = '';
 
@@ -119,7 +119,7 @@ function hideLoading() {
     ];
     adminElements.forEach(el => {
         if (el && el.elt && typeof el.removeAttribute === 'function') {
-            if (typeof isAdmin !== 'undefined' && isAdmin) {
+            if (typeof isAdmin !== 'undefined' && isAdmin) { 
                  el.removeAttribute('disabled');
                  if (typeof el.show === 'function' && el !== connectButton) el.show();
             } else {
@@ -139,6 +139,8 @@ function preload() {
         slotImages.push(loadImage(imagePath));
     }
     bgImage = loadImage('./bg.jpg');
+    // 만약 트위터 아이콘 이미지를 사용한다면 여기서 로드:
+    // twitterIcon = loadImage('./img/twitter_icon.png'); 
 }
 
 function setup() {
@@ -150,7 +152,7 @@ function setup() {
     textAlign(CENTER, CENTER);
 
     connectButton = createButton("🦊 Connect Wallet")
-        .position(20, 20)
+        .position(20, 20) // X, Y
         .mousePressed(async () => {
             if (globalIsLoading) return;
             if (typeof connectWallet === 'function') await connectWallet(); // wallet.js
@@ -164,7 +166,19 @@ function setup() {
         .style("text-align", "left")
         .style("padding-left", "5px")
         .style("width", "150px") // 너비 지정
-        .position(connectButton.x, connectButton.y + connectButton.height + 5);
+        .position(connectButton.x, connectButton.y + connectButton.height + 5); // 버튼 바로 아래 + 여백 5px
+
+    // 트위터 링크 추가 (우측 상단)
+    twitterLink = createA('https://twitter.com/mongcats_', '🐦 Follow us on X', '_blank'); // 새 탭에서 열기, 텍스트 변경
+    twitterLink.position(width - twitterLink.width - 20, 20); // 우측 상단 위치 (여백 고려하여 동적 계산)
+    twitterLink.style('font-size', '12px'); // 폰트 크기 조정
+    twitterLink.style('text-decoration', 'none');
+    twitterLink.style('color', '#000000'); // 트위터 X 로고 색상 (검정) 또는 #1DA1F2 (기존 블루)
+    twitterLink.style('padding', '5px 8px');
+    twitterLink.style('border', '1px solid #ccc');
+    twitterLink.style('border-radius', '5px');
+    twitterLink.style('background-color', '#f0f0f0');
+
 
     if (typeof setupInsertButtons === 'function') setupInsertButtons(); // ui.js
     else console.error("setupInsertButtons function is not defined.");
@@ -198,7 +212,7 @@ function setup() {
     tmongBalanceDiv = createDiv('').style('font-size', '14px').style('color', 'black').parent(tokenInfoBox);
     tmongInfoDiv = createDiv('').style('font-size', '10px').style('color', '#333').style('word-break', 'break-all').parent(tokenInfoBox);
 
-    addTMongTokenLink = createA('javascript:void(0);', 'Add tMONG to MetaMask')
+    addTMongTokenLink = createA('javascript:void(0);', 'Add $tMONG to MetaMask')
         .style('font-size', '10px')
         .style('color', '#007bff')
         .style('text-decoration', 'underline')
@@ -216,7 +230,6 @@ function updateTokenInfoUI(balance, tokenCa) {
     if (tokenInfoBox) {
         if (tmongBalanceDiv) tmongBalanceDiv.html(`My Balance: ${balance !== null ? balance : 'Loading...'}`);
         if (tmongInfoDiv) tmongInfoDiv.html(`$tMONG CA: ${tokenCa || 'N/A'}`);
-        // 토큰 박스 표시는 draw() 함수에서 제어
     }
 }
 
@@ -247,23 +260,36 @@ function draw() {
         push(); tint(255, 77); image(bgImage, 0, 0, width, height); pop();
     } else background(240);
 
-    // UI 상태에 따른 화면 렌더링
     if (!isConnected) {
         fill(0); textSize(20); textAlign(CENTER, CENTER);
         text("🦊 Please connect your wallet to play.", width / 2, height / 2 - 50);
         hideTokenInfoUI();
-        // 버튼 표시는 hideLoading()이 전담
+        if(Array.isArray(insertButtons)) insertButtons.forEach(b => {if(b?.hide) b.hide();});
+        if(spinButton?.hide) spinButton.hide();
+        if(resetButton?.hide) resetButton.hide();
+        if(claimButton?.hide) claimButton.hide();
+
     } else if (claimMode()) {
-        layoutClaimMode(); // Claim 버튼 관련 UI 조정
+        layoutClaimMode();
         hideTokenInfoUI();
+        if(Array.isArray(insertButtons)) insertButtons.forEach(b => {if(b?.hide) b.hide();});
+        if(spinButton?.hide) spinButton.hide();
+        if(resetButton?.hide) resetButton.hide();
+
         if (typeof drawGameScreen === 'function') drawGameScreen();
         if (typeof drawResultText === 'function') drawResultText();
         if (typeof drawScoreBreakdown === 'function') drawScoreBreakdown();
-    } else if (!gameStarted) { // 코인 투입 화면
+    } else if (!gameStarted) {
         if (typeof drawInsertCoinScreen === 'function') drawInsertCoinScreen();
         if (tokenInfoBox) tokenInfoBox.show();
-    } else { // 게임 진행 중
+        if(Array.isArray(insertButtons)) insertButtons.forEach(b => {if(b?.show) b.show();});
+        if(spinButton?.hide) spinButton.hide();
+        if(resetButton?.hide) resetButton.hide();
+        if(claimButton?.hide) claimButton.hide();
+    } else {
         hideTokenInfoUI();
+        if(Array.isArray(insertButtons)) insertButtons.forEach(b => {if(b?.hide) b.hide();});
+
         if (typeof drawGameScreen === 'function') drawGameScreen();
         if (typeof updateReelAnimations === 'function' && spinning) {
             updateReelAnimations();
@@ -276,9 +302,9 @@ function draw() {
 
     if (spinning && reels.every(r => r.spinSpeeds && r.spinSpeeds.length === 0)) {
         spinning = false;
-        if (typeof evaluateResult === 'function') evaluateResult(); // game.js
+        if (typeof evaluateResult === 'function') evaluateResult();
         else console.error("evaluateResult function not defined.");
-        if (!globalIsLoading) hideLoading(); // 스핀 종료 후 버튼 상태 갱신
+        if (!globalIsLoading) hideLoading();
     }
 
     if (globalIsLoading) {
@@ -294,7 +320,7 @@ function draw() {
 }
 
 const claimMode = () =>
-    typeof hasRemainingSeeds === 'function' && !hasRemainingSeeds() && playCredits === 0 && score > 0; // session.js
+    typeof hasRemainingSeeds === 'function' && !hasRemainingSeeds() && playCredits === 0 && score > 0;
 
 function setupButtons() {
     spinButton = createButton('SPIN')
@@ -305,8 +331,8 @@ function setupButtons() {
             if (playCredits <= 0) { alert("🎰 Please insert coins! (No credits to spin)"); return; }
             if (spinning) return;
             if (typeof startSpin !== 'function') { console.error("startSpin function not defined."); return; }
-            await startSpin(); // game.js (spinning = true 설정)
-            if (!globalIsLoading) hideLoading(); // 스핀 시작 후 즉시 버튼 상태 업데이트
+            await startSpin();
+            if (!globalIsLoading) hideLoading();
         })
         .hide();
 
@@ -323,7 +349,7 @@ function setupButtons() {
         .mousePressed(async () => {
             if (globalIsLoading) return;
             if (typeof claimTokens !== 'function') { console.error("claimTokens function not defined."); return; }
-            await claimTokens(); // claim.js (내부에서 로딩 관리 및 restoreDefaultLayout 호출)
+            await claimTokens();
         })
         .hide();
 }
@@ -335,7 +361,6 @@ function positionBottomButtons() {
 }
 
 function layoutClaimMode() {
-    // hideLoading()에서 claimButton 표시/활성화 관리
     if (claimButton) {
          claimButton.position(width / 2 - claimButton.width / 2, BTN_Y);
     }
@@ -350,9 +375,7 @@ function restoreDefaultLayout() {
     if (typeof fetchAndUpdateTokenInfo === 'function' && isConnected) {
          fetchAndUpdateTokenInfo();
     }
-    // 이 함수가 호출되면 UI는 "코인 투입" 상태로 돌아가야 함.
-    // hideLoading()을 호출하여 이 상태에 맞는 버튼들을 최종적으로 설정.
-    if (typeof hideLoading === 'function' && !globalIsLoading) { // 다른 로딩 작업이 진행 중이 아닐 때만 UI 정리
+    if (typeof hideLoading === 'function' && !globalIsLoading) {
       hideLoading();
     }
 }

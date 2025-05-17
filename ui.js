@@ -1,4 +1,4 @@
-// ui.js – 메시지 영어화, mousePressed 콜백에서 직접적인 UI 변경 최소화
+// ui.js – 버튼 레이블 변경
 
 function setupInsertButtons() {
   if (typeof insertButtons !== 'undefined' && Array.isArray(insertButtons)) {
@@ -7,35 +7,40 @@ function setupInsertButtons() {
   }
 
   const options = [
-      { label: 'Claim Free Spins (5/day)', type: 'free', plays: 5 },
-      { label: 'Buy 15 Games (0.1 MON)', type: 'paid', plays: 15, price: '0.1' }
+      // 무료 스핀 레이블 변경: 10회 / 3시간마다
+      { label: 'Claim Free Spins (10 spins / 3 hours)', type: 'free', plays: 10 }, // plays도 10으로 변경
+      // 유료 스핀 레이블 및 옵션 변경: 0.1 MON으로 30회
+      { label: 'Buy 30 Games (0.1 $MON)', type: 'paid', plays: 30, price: '0.1' } 
+      // 나머지 유료 옵션은 컨트랙트에서 지원한다면 유지, 아니면 제거
   ];
 
   options.forEach((opt, idx) => {
-      const btn = createButton(opt.label); // p5.js 전역 함수
-      btn.position(width / 2 - 100, 280 + idx * 45);
-      btn.size(200, 35);
+      const btn = createButton(opt.label);
+      btn.position(width / 2 - 125, 280 + idx * 45); // 옵션 수에 따라 Y 간격 조절 필요할 수 있음
+      btn.size(250, 35);
       btn.mousePressed(async () => {
-          if (globalIsLoading) return; // main.js 전역 변수
+          if (globalIsLoading) return;
           if (!isConnected) return alert("🦊 Please connect your wallet first.");
 
           if (opt.type === 'free') {
-              if (typeof claimFreeSpins === 'function') { // claim.js
-                  await claimFreeSpins();
+              if (typeof claimFreeSpins === 'function') {
+                  await claimFreeSpins(); // claim.js (내부에서 playCredits, gameStarted 업데이트)
               } else { console.error("claimFreeSpins function is not defined."); }
           } else { // 'paid'
-              if (typeof buyPlays === 'function') { // claim.js
-                  await buyPlays(opt.plays, opt.price);
+              if (typeof buyPlays === 'function') {
+                  await buyPlays(opt.plays, opt.price); // claim.js (내부에서 playCredits, gameStarted 업데이트)
               } else { console.error("buyPlays function is not defined."); }
           }
+          // UI 업데이트는 main.js의 hideLoading() 또는 draw() 로직에 의해 일관되게 처리됨.
       });
       if (Array.isArray(insertButtons)) insertButtons.push(btn);
   });
 }
 
+// ... (setupSpinAndResetButtons, drawInsertCoinScreen, drawGameScreen, drawResultText, drawScoreBreakdown 함수는 이전과 동일) ...
 function setupSpinAndResetButtons() {
 spinButton = createButton('SPIN');
-spinButton.position(width / 2 - 40, BTN_Y); // main.js의 BTN_Y 사용
+spinButton.position(width / 2 - 40, BTN_Y);
 spinButton.size(80, 40);
 spinButton.mousePressed(async () => {
   if (globalIsLoading) return;
@@ -46,7 +51,7 @@ spinButton.mousePressed(async () => {
   }
   if (spinning) return;
   if (typeof startSpin === 'function') {
-      await startSpin(); // game.js
+      await startSpin(); 
   } else {
       console.error("startSpin function is not defined.");
   }
@@ -55,11 +60,11 @@ spinButton.mousePressed(async () => {
 spinButton.hide();
 
 resetButton = createButton('← Back to Insert Coin');
-resetButton.position(width / 2 - 100, BTN_Y); // main.js의 BTN_Y 사용
+resetButton.position(width / 2 - 100, BTN_Y);
 resetButton.size(200, 40);
 resetButton.mousePressed(() => {
   if (globalIsLoading) return;
-  if (typeof restoreDefaultLayout === 'function') { // main.js
+  if (typeof restoreDefaultLayout === 'function') { 
       restoreDefaultLayout();
   } else {
       console.error("restoreDefaultLayout function is not defined.");
@@ -86,7 +91,6 @@ text(
 );
 }
 
-// drawGameScreen, drawResultText, drawScoreBreakdown 함수는 메시지 변경 없음 (기존 코드 유지)
 function drawGameScreen() {
 fill(0);
 textAlign(CENTER, CENTER); textSize(24);

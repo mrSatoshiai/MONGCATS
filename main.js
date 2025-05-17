@@ -138,7 +138,7 @@ function preload() {
         let imagePath = `img/${i}.jpg`;
         slotImages.push(loadImage(imagePath));
     }
-    bgImage = loadImage('./bg.jpg');
+    bgImage = loadImage('./bg2.jpg');
     // 만약 트위터 아이콘 이미지를 사용한다면 여기서 로드:
     // twitterIcon = loadImage('./img/twitter_icon.png'); 
 }
